@@ -13,38 +13,59 @@ struct MeterDetailView: View {
     
     var body: some View {
         ScrollView {
-            VStack(spacing: 20) {
+            VStack(spacing: 24) {
                 
-                StatsSection(readings: firebaseService.readings)
+                // Stats Section with gradient background
+                VStack(spacing: 0) {
+                    StatsSection(readings: firebaseService.readings)
+                }
+                .background(
+                    LinearGradient(
+                        colors: [Color(red: 0.95, green: 0.97, blue: 1.0), Color.white],
+                        startPoint: .top,
+                        endPoint: .bottom
+                    )
+                )
+                .cornerRadius(16)
+                .shadow(color: Color.black.opacity(0.05), radius: 8, x: 0, y: 4)
+                .padding(.horizontal)
                 
+                // Chart Section
                 ChartSection(readings: firebaseService.readings)
                 
+                // History Section
                 HistorySection(
                     readings: firebaseService.readings,
                     onEdit: { reading in
                         readingToEdit = reading
-                        showingManualEntry = true
                     },
                     onDelete: deleteReading
                 )
             }
-            .padding(.vertical)
+            .padding(.vertical, 16)
         }
+        .background(Color(UIColor.systemGroupedBackground))
         .navigationTitle(meter.name)
+        .navigationBarTitleDisplayMode(.large)
         .toolbar {
             ToolbarItem(placement: .navigationBarTrailing) {
                 Menu {
-                    Button { showingScanner = true } label: {
-                        Label("Scan Camera", systemImage: "camera")
+                    Button {
+                        showingScanner = true
+                    } label: {
+                        Label(NSLocalizedString("Scan Camera", comment: ""), systemImage: "camera.fill")
                     }
                     Button {
                         readingToEdit = nil
-                        showingManualEntry = true
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
+                            showingManualEntry = true
+                        }
                     } label: {
-                        Label("Manual Entry", systemImage: "keyboard")
+                        Label(NSLocalizedString("Manual Entry", comment: ""), systemImage: "keyboard")
                     }
                 } label: {
-                    Image(systemName: "plus")
+                    Image(systemName: "plus.circle.fill")
+                        .font(.system(size: 22))
                 }
             }
         }
@@ -58,8 +79,13 @@ struct MeterDetailView: View {
                     showingScanner = false
                 }
         }
+        .sheet(item: $readingToEdit) { reading in
+            ManualEntryView(meterId: meter.meterNumber, readingToEdit: reading)
+        }
         .sheet(isPresented: $showingManualEntry) {
-            ManualEntryView(meterId: meter.meterNumber, readingToEdit: readingToEdit)
+            if readingToEdit == nil {
+                ManualEntryView(meterId: meter.meterNumber, readingToEdit: nil)
+            }
         }
         .onAppear {
             firebaseService.listenToReadings(for: meter.meterNumber)
@@ -73,11 +99,20 @@ extension MeterDetailView {
     
     private func saveReading(value: Double) {
         let reading = Reading(meterId: meter.meterNumber, value: value, date: .now)
-        try? firebaseService.addReading(reading)
+        do {
+            try firebaseService.addReading(reading)
+            Haptics.shared.play(.success)
+        } catch {
+            Haptics.shared.play(.error)
+        }
     }
     
     private func deleteReading(_ reading: Reading) {
-        try? firebaseService.deleteReading(reading)
+        do {
+            try firebaseService.deleteReading(reading)
+            Haptics.shared.play(.success)
+        } catch {
+            Haptics.shared.play(.error)
+        }
     }
 }
-

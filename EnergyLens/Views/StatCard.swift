@@ -6,23 +6,25 @@ struct StatCard: View {
     let unit: String
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 4) {
+        HStack {
             Text(title)
-                .font(.caption)
-                .foregroundColor(.secondary)
+                .font(.body)
+                .foregroundColor(.primary)
             
-            Text(value)
-                .font(.title2)
-                .bold()
+            Spacer()
             
-            Text(unit)
-                .font(.caption2)
-                .foregroundColor(.secondary)
+            HStack(alignment: .firstTextBaseline, spacing: 3) {
+                Text(value)
+                    .font(.body)
+                    .fontWeight(.semibold)
+                    .foregroundColor(.primary)
+                
+                Text(unit)
+                    .font(.subheadline)
+                    .foregroundColor(.secondary)
+            }
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding()
-        .background(Color(.systemBackground))
-        .cornerRadius(12)
-        .shadow(color: .black.opacity(0.05), radius: 5, x: 0, y: 2)
+        .padding(.horizontal, 16)
+        .padding(.vertical, 12)
     }
 }

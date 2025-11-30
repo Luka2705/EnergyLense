@@ -1,0 +1,63 @@
+/* Dashboard View */
+"EnergyLens" = "EnergyLens";
+"No Meters Yet" = "Noch keine Zähler";
+"Tap the button below to add your first electricity meter." = "Tippen Sie auf die Schaltfläche unten, um Ihren ersten Stromzähler hinzuzufügen.";
+"Meter #: %@" = "Zähler Nr.: %@";
+"Add Meter" = "Zähler hinzufügen";
+"New Meter Details" = "Neue Zählerdetails";
+"Meter Name (e.g. Home)" = "Zählername (z.B. Zuhause)";
+"Meter Number" = "Zählernummer";
+"Cancel" = "Abbrechen";
+"Save" = "Speichern";
+"Edit" = "Bearbeiten";
+"Delete" = "Löschen";
+"Edit Meter Details" = "Zählerdetails bearbeiten";
+"Meter Name" = "Zählername";
+"Edit Meter" = "Zähler bearbeiten";
+"Delete Meter" = "Zähler löschen";
+"Are you sure you want to delete this meter? All readings associated with this meter will also be deleted. This action cannot be undone." = "Möchten Sie diesen Zähler wirklich löschen? Alle zugehörigen Ablesungen werden ebenfalls gelöscht. Diese Aktion kann nicht rückgängig gemacht werden.";
+
+/* Meter Detail View */
+"Scan Camera" = "Kamera scannen";
+"Manual Entry" = "Manuelle Eingabe";
+
+/* Manual Entry View */
+"Reading Details" = "Ablesungsdetails";
+"Value (kWh)" = "Wert (kWh)";
+"Date" = "Datum";
+"Delete Reading" = "Ablesung löschen";
+"Edit Reading" = "Ablesung bearbeiten";
+"Add Reading" = "Ablesung hinzufügen";
+"Are you sure you want to delete this reading? This action cannot be undone." = "Möchten Sie diese Ablesung wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden.";
+"Please enter a valid number" = "Bitte geben Sie eine gültige Zahl ein";
+"Value must be positive" = "Der Wert muss positiv sein";
+"Failed to save: %@" = "Speichern fehlgeschlagen: %@";
+"Failed to delete: %@" = "Löschen fehlgeschlagen: %@";
+
+/* Stats Section */
+"Average" = "Durchschnitt";
+"Year End Prediction" = "Jahresendprognose";
+"kWh/day" = "kWh/Tag";
+"kWh" = "kWh";
+
+/* History Section */
+"History" = "Verlauf";
+"No readings yet" = "Noch keine Ablesungen";
+"Add your first reading to start tracking" = "Fügen Sie Ihre erste Ablesung hinzu, um mit der Verfolgung zu beginnen";
+"%@ kWh" = "%@ kWh";
+
+/* Chart Section */
+"Consumption Trend" = "Verbrauchstrend";
+
+/* Meter Comparison View */
+"Select Meters to Compare" = "Zähler zum Vergleichen auswählen";
+"Combined Statistics" = "Kombinierte Statistiken";
+"Consumption Breakdown" = "Verbrauchsaufschlüsselung";
+"Select at least 2 meters to compare" = "Wähle mind. 2 Zähler zum Vergleichen aus";
+"Consumption Comparison" = "Verbrauchsvergleich";
+"Compare Meters" = "Zähler vergleichen";
+"Done" = "Fertig";
+"Total Consumption" = "Gesamtverbrauch";
+"Avg Daily" = "Ø Täglich";
+"Next Month" = "Nächster Monat";
+"Highest User" = "Höchster Verbraucher";

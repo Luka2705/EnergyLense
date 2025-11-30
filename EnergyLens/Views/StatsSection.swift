@@ -12,10 +12,15 @@ struct StatsSection: View {
     }
     
     var body: some View {
-        HStack(spacing: 15) {
-            StatCard(title: "Average", value: averageText, unit: "kWh/day")
-            StatCard(title: "Year End", value: yearEndText, unit: "kWh")
+        VStack(spacing: 0) {
+            StatCard(title: NSLocalizedString("Average", comment: ""), value: averageText, unit: NSLocalizedString("kWh/day", comment: ""))
+            
+            Divider()
+                .padding(.horizontal)
+            
+            StatCard(title: NSLocalizedString("Year End Prediction", comment: ""), value: yearEndText, unit: NSLocalizedString("kWh", comment: ""))
         }
-        .padding(.horizontal)
+        .background(Color(UIColor.secondarySystemGroupedBackground))
+        .clipShape(RoundedRectangle(cornerRadius: 10))
     }
 }
