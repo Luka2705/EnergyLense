@@ -57,7 +57,11 @@ class FirebaseService: ObservableObject {
             batch.updateData(["name": newName], forDocument: meterRef)
         }
         
-        try batch.commit()
+        batch.commit { error in
+            if let error = error {
+                print("Error committing meter update batch: \(error)")
+            }
+        }
     }
     
     func deleteMeter(_ meter: Meter) throws {
@@ -86,7 +90,11 @@ class FirebaseService: ObservableObject {
                 }
             }
         
-        try batch.commit()
+        batch.commit { error in
+            if let error = error {
+                print("Error committing meter delete batch: \(error)")
+            }
+        }
     }
     
     func listenToMeters() {
@@ -130,3 +138,4 @@ class FirebaseService: ObservableObject {
             }
     }
 }
+

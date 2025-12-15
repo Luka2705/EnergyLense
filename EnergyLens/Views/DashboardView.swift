@@ -3,7 +3,6 @@ import SwiftUI
 struct DashboardView: View {
     @StateObject private var firebaseService = FirebaseService.shared
     @State private var showingAddMeter = false
-    @State private var showingComparison = false
     @State private var newMeterNumber = ""
     @State private var newMeterName = ""
     @State private var meterToEdit: Meter? = nil
@@ -98,13 +97,6 @@ struct DashboardView: View {
                 .background(Color(UIColor.systemGroupedBackground))
                 .navigationTitle(NSLocalizedString("EnergyLens", comment: ""))
                 .toolbar {
-                    if firebaseService.meters.count >= 2 {
-                        ToolbarItem(placement: .navigationBarTrailing) {
-                            Button(action: { showingComparison = true }) {
-                                Image(systemName: "chart.bar.xaxis")
-                            }
-                        }
-                    }
                 }
                 
                 // Add Meter Button (Fixed at bottom)
@@ -157,9 +149,6 @@ struct DashboardView: View {
                         }
                     }
                 }
-            }
-            .sheet(isPresented: $showingComparison) {
-                MeterComparisonView()
             }
             .sheet(item: $meterToEdit) { meter in
                 NavigationView {

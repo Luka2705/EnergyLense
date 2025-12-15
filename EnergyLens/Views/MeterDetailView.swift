@@ -1,48 +1,23 @@
 import SwiftUI
 import Charts
+import Combine
+
+private final class MeterDetailViewModel: ObservableObject {
+    @Published var showingScanner = false
+    @Published var showingManualEntry = false
+    @Published var scannedText = ""
+    @Published var isScanning = false
+    @Published var readingToEdit: Reading? = nil
+}
 
 struct MeterDetailView: View {
     let meter: Meter
     @ObservedObject private var firebaseService = FirebaseService.shared
-    
-    @State private var showingScanner = false
-    @State private var showingManualEntry = false
-    @State private var scannedText = ""
-    @State private var isScanning = false
-    @State private var readingToEdit: Reading? = nil
+    @StateObject private var viewModel = MeterDetailViewModel()
     
     var body: some View {
         ScrollView {
-            VStack(spacing: 24) {
-                
-                // Stats Section with gradient background
-                VStack(spacing: 0) {
-                    StatsSection(readings: firebaseService.readings)
-                }
-                .background(
-                    LinearGradient(
-                        colors: [Color(red: 0.95, green: 0.97, blue: 1.0), Color.white],
-                        startPoint: .top,
-                        endPoint: .bottom
-                    )
-                )
-                .cornerRadius(16)
-                .shadow(color: Color.black.opacity(0.05), radius: 8, x: 0, y: 4)
-                .padding(.horizontal)
-                
-                // Chart Section
-                ChartSection(readings: firebaseService.readings)
-                
-                // History Section
-                HistorySection(
-                    readings: firebaseService.readings,
-                    onEdit: { reading in
-                        readingToEdit = reading
-                    },
-                    onDelete: deleteReading
-                )
-            }
-            .padding(.vertical, 16)
+            content
         }
         .background(Color(UIColor.systemGroupedBackground))
         .navigationTitle(meter.name)
@@ -51,14 +26,14 @@ struct MeterDetailView: View {
             ToolbarItem(placement: .navigationBarTrailing) {
                 Menu {
                     Button {
-                        showingScanner = true
+                        viewModel.showingScanner = true
                     } label: {
                         Label(NSLocalizedString("Scan Camera", comment: ""), systemImage: "camera.fill")
                     }
                     Button {
-                        readingToEdit = nil
+                        viewModel.readingToEdit = nil
                         DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
-                            showingManualEntry = true
+                            viewModel.showingManualEntry = true
                         }
                     } label: {
                         Label(NSLocalizedString("Manual Entry", comment: ""), systemImage: "keyboard")
@@ -69,27 +44,56 @@ struct MeterDetailView: View {
                 }
             }
         }
-        .sheet(isPresented: $showingScanner) {
-            ScannerView(scannedText: $scannedText, isScanning: $isScanning)
-                .onAppear { isScanning = true }
-                .onChange(of: scannedText) { newValue in
-                    if let value = Double(newValue.filter("0123456789.".contains)) {
+        .sheet(isPresented: $viewModel.showingScanner) {
+            ScannerView(scannedText: $viewModel.scannedText, isScanning: $viewModel.isScanning)
+                .onAppear { viewModel.isScanning = true }
+                .onChange(of: viewModel.scannedText) {
+                    if let value = Double(viewModel.scannedText.filter("0123456789.".contains)) {
                         saveReading(value: value)
                     }
-                    showingScanner = false
+                    viewModel.showingScanner = false
                 }
         }
-        .sheet(item: $readingToEdit) { reading in
+        .sheet(item: $viewModel.readingToEdit) { reading in
             ManualEntryView(meterId: meter.meterNumber, readingToEdit: reading)
         }
-        .sheet(isPresented: $showingManualEntry) {
-            if readingToEdit == nil {
+        .sheet(isPresented: $viewModel.showingManualEntry) {
+            if viewModel.readingToEdit == nil {
                 ManualEntryView(meterId: meter.meterNumber, readingToEdit: nil)
             }
         }
         .onAppear {
             firebaseService.listenToReadings(for: meter.meterNumber)
         }
+    }
+    
+    private var content: some View {
+        VStack(spacing: 24) {
+            VStack(spacing: 0) {
+                StatsSection(readings: firebaseService.readings)
+            }
+            .background(
+                LinearGradient(
+                    colors: [Color(red: 0.95, green: 0.97, blue: 1.0), Color.white],
+                    startPoint: .top,
+                    endPoint: .bottom
+                )
+            )
+            .cornerRadius(16)
+            .shadow(color: Color.black.opacity(0.05), radius: 8, x: 0, y: 4)
+            .padding(.horizontal)
+
+            ChartSection(readings: firebaseService.readings)
+
+            HistorySection(
+                readings: firebaseService.readings,
+                onEdit: { reading in
+                    viewModel.readingToEdit = reading
+                },
+                onDelete: deleteReading
+            )
+        }
+        .padding(.vertical, 16)
     }
 }
 
@@ -116,3 +120,4 @@ extension MeterDetailView {
         }
     }
 }
+
