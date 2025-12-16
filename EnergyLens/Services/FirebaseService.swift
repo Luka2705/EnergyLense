@@ -17,6 +17,20 @@ class FirebaseService: ObservableObject {
         try db.collection("meters").document(meter.meterNumber).setData(from: meter)
     }
     
+    /// Updates the name of a meter document in the "meters" collection.
+    /// - Parameters:
+    ///   - meterId: The meter's document ID (we use meterNumber as document id in this app)
+    ///   - newName: The new display name for the meter
+    func updateMeterName(meterId: String, newName: String, completion: ((Error?) -> Void)? = nil) {
+        let ref = db.collection("meters").document(meterId)
+        ref.updateData(["name": newName]) { error in
+            if let error = error {
+                print("Error updating meter name: \(error)")
+            }
+            completion?(error)
+        }
+    }
+    
     func updateMeter(oldMeterNumber: String, newName: String, newMeterNumber: String) throws {
         let batch = db.batch()
         

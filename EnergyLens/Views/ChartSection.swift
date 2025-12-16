@@ -44,6 +44,17 @@ struct ChartSection: View {
         return points
     }
     
+    private var averageLine: (start: Date, end: Date, yKWhPerDay: Double)? {
+        let sorted = readings.sorted { $0.date < $1.date }
+        guard let oldest = sorted.first, let youngest = sorted.last, sorted.count >= 2 else { return nil }
+        let hours = youngest.date.timeIntervalSince(oldest.date) / 3600.0
+        guard hours > 0 else { return nil }
+        let delta = youngest.value - oldest.value
+        guard delta >= 0 else { return nil }
+        let kwhPerDay = (delta / hours) * 24.0
+        return (start: oldest.date, end: youngest.date, yKWhPerDay: kwhPerDay)
+    }
+    
     var body: some View {
         if intervals.isEmpty { return AnyView(EmptyView()) }
 
@@ -70,6 +81,12 @@ struct ChartSection: View {
                     .lineStyle(StrokeStyle(lineWidth: 3, lineCap: .round, lineJoin: .round))
                     .accessibilityLabel(Text("Date: \(p.x.formatted(date: .abbreviated, time: .shortened))"))
                     .accessibilityValue(Text(String(format: "%.2f kWh/day", p.yKWhPerDay)))
+
+                    if let avg = averageLine {
+                        RuleMark(y: .value("kWh/day", avg.yKWhPerDay))
+                            .foregroundStyle(Color.red)
+                            .lineStyle(StrokeStyle(lineWidth: 2))
+                    }
                 }
                 .chartOverlay { proxy in
                     GeometryReader { geo in
