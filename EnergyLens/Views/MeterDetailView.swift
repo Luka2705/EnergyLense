@@ -2,15 +2,31 @@ import SwiftUI
 import Charts
 import Combine
 
+private enum ActiveSheet: Identifiable {
+    case scanner
+    case manualEntry
+    case editReading(Reading)
+    case rename
+
+    var id: String {
+        switch self {
+        case .scanner: return "scanner"
+        case .manualEntry: return "manualEntry"
+        case .editReading(let r):
+            let suffix = r.id ?? "unknown"
+            return "editReading_\(suffix)"
+        case .rename: return "rename"
+        }
+    }
+}
+
 private final class MeterDetailViewModel: ObservableObject {
-    @Published var showingScanner = false
-    @Published var showingManualEntry = false
     @Published var scannedText = ""
     @Published var isScanning = false
     @Published var readingToEdit: Reading? = nil
-    @Published var showingRename = false
     @Published var editedName: String = ""
     @Published var editedNumber: String = ""
+    @Published var activeSheet: ActiveSheet? = nil
 }
 
 struct MeterDetailView: View {
@@ -60,7 +76,7 @@ struct MeterDetailView: View {
                     .onTapGesture {
                         viewModel.editedName = meter.name
                         viewModel.editedNumber = meter.meterNumber
-                        viewModel.showingRename = true
+                        viewModel.activeSheet = .rename
                     }
                 }
                 .frame(maxWidth: .infinity)
@@ -154,17 +170,18 @@ struct MeterDetailView: View {
                                 .frame(minWidth: 120, maxWidth: .infinity, alignment: .leading)
                                 Spacer()
                                 // Value
-                                Text(String(format: "%.2f", reading.value))
+                                Text("\(Int(reading.value.rounded())) kWh")
                                     .font(.footnote.monospacedDigit())
                                     .foregroundStyle(.primary)
                                     .frame(width: 80, alignment: .trailing)
                                 // Delta
                                 Group {
                                     if let delta = delta {
-                                        let sign = delta >= 0 ? "+" : ""
-                                        Text("\(sign)\(String(format: "%.2f", delta))")
+                                        let intDelta = Int(delta.rounded())
+                                        let sign = intDelta >= 0 ? "+" : ""
+                                        Text("\(sign)\(intDelta)")
                                             .font(.footnote.monospacedDigit())
-                                            .foregroundStyle(delta >= 0 ? .green : .red)
+                                            .foregroundStyle(intDelta >= 0 ? .green : .red)
                                     } else {
                                         Text("–").foregroundStyle(.secondary)
                                     }
@@ -174,7 +191,7 @@ struct MeterDetailView: View {
                                 // Actions
                                 HStack(spacing: 8) {
                                     Button {
-                                        viewModel.readingToEdit = reading
+                                        viewModel.activeSheet = .editReading(reading)
                                     } label: {
                                         Image(systemName: "pencil")
                                             .font(.system(size: 14, weight: .semibold))
@@ -252,20 +269,17 @@ struct MeterDetailView: View {
                     Button {
                         viewModel.editedName = meter.name
                         viewModel.editedNumber = meter.meterNumber
-                        viewModel.showingRename = true
+                        viewModel.activeSheet = .rename
                     } label: {
                         Label(NSLocalizedString("Rename Meter", comment: ""), systemImage: "pencil")
                     }
                     Button {
-                        viewModel.showingScanner = true
+                        viewModel.activeSheet = .scanner
                     } label: {
                         Label(NSLocalizedString("Scan Camera", comment: ""), systemImage: "camera.fill")
                     }
                     Button {
-                        viewModel.readingToEdit = nil
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
-                            viewModel.showingManualEntry = true
-                        }
+                        viewModel.activeSheet = .manualEntry
                     } label: {
                         Label(NSLocalizedString("Manual Entry", comment: ""), systemImage: "keyboard")
                     }
@@ -277,62 +291,60 @@ struct MeterDetailView: View {
                 }
             }
         }
-        .sheet(isPresented: $viewModel.showingScanner) {
-            ScannerView(scannedText: $viewModel.scannedText, isScanning: $viewModel.isScanning)
-                .onAppear { viewModel.isScanning = true }
-                .onChange(of: viewModel.scannedText) {
-                    if let value = Double(viewModel.scannedText.filter("0123456789.".contains)) {
-                        saveReading(value: value)
+        .sheet(item: $viewModel.activeSheet) { sheet in
+            switch sheet {
+            case .scanner:
+                ScannerView(scannedText: $viewModel.scannedText, isScanning: $viewModel.isScanning)
+                    .onAppear { viewModel.isScanning = true }
+                    .onChange(of: viewModel.scannedText) {
+                        if let value = Double(viewModel.scannedText.filter("0123456789.".contains)) {
+                            saveReading(value: value)
+                        }
+                        viewModel.activeSheet = nil
                     }
-                    viewModel.showingScanner = false
-                }
-        }
-        .sheet(item: $viewModel.readingToEdit) { reading in
-            ManualEntryView(meterId: meter.meterNumber, readingToEdit: reading)
-        }
-        .sheet(isPresented: $viewModel.showingManualEntry) {
-            if viewModel.readingToEdit == nil {
+            case .manualEntry:
                 ManualEntryView(meterId: meter.meterNumber, readingToEdit: nil)
-            }
-        }
-        .sheet(isPresented: $viewModel.showingRename) {
-            NavigationView {
-                Form {
-                    Section(header: Text(NSLocalizedString("Rename Meter", comment: ""))) {
-                        TextField(NSLocalizedString("Meter Name", comment: ""), text: $viewModel.editedName)
-                            .textInputAutocapitalization(.words)
-                        TextField(NSLocalizedString("Meter Number", comment: ""), text: $viewModel.editedNumber)
-                            .keyboardType(.numberPad)
-                    }
-                }
-                .navigationTitle(NSLocalizedString("Rename", comment: ""))
-                .navigationBarTitleDisplayMode(.inline)
-                .toolbar {
-                    ToolbarItem(placement: .cancellationAction) {
-                        Button(NSLocalizedString("Cancel", comment: "")) {
-                            viewModel.showingRename = false
-                            viewModel.editedName = ""
-                            viewModel.editedNumber = ""
+            case .editReading(let reading):
+                ManualEntryView(meterId: meter.meterNumber, readingToEdit: reading)
+            case .rename:
+                NavigationView {
+                    Form {
+                        Section(header: Text(NSLocalizedString("Rename Meter", comment: ""))) {
+                            TextField(NSLocalizedString("Meter Name", comment: ""), text: $viewModel.editedName)
+                                .textInputAutocapitalization(.words)
+                            TextField(NSLocalizedString("Meter Number", comment: ""), text: $viewModel.editedNumber)
+                                .keyboardType(.numberPad)
                         }
                     }
-                    ToolbarItem(placement: .confirmationAction) {
-                        Button(NSLocalizedString("Save", comment: "")) {
-                            let newName = viewModel.editedName.trimmingCharacters(in: .whitespacesAndNewlines)
-                            let newNumber = viewModel.editedNumber.trimmingCharacters(in: .whitespacesAndNewlines)
-                            guard !newName.isEmpty, !newNumber.isEmpty else { return }
-                            do {
-                                try FirebaseService.shared.updateMeter(
-                                    oldMeterNumber: meter.meterNumber,
-                                    newName: newName,
-                                    newMeterNumber: newNumber
-                                )
-                                Haptics.shared.play(.success)
-                                viewModel.showingRename = false
-                            } catch {
-                                Haptics.shared.play(.error)
+                    .navigationTitle(NSLocalizedString("Rename", comment: ""))
+                    .navigationBarTitleDisplayMode(.inline)
+                    .toolbar {
+                        ToolbarItem(placement: .cancellationAction) {
+                            Button(NSLocalizedString("Cancel", comment: "")) {
+                                viewModel.activeSheet = nil
+                                viewModel.editedName = ""
+                                viewModel.editedNumber = ""
                             }
                         }
-                        .disabled(viewModel.editedName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || viewModel.editedNumber.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                        ToolbarItem(placement: .confirmationAction) {
+                            Button(NSLocalizedString("Save", comment: "")) {
+                                let newName = viewModel.editedName.trimmingCharacters(in: .whitespacesAndNewlines)
+                                let newNumber = viewModel.editedNumber.trimmingCharacters(in: .whitespacesAndNewlines)
+                                guard !newName.isEmpty, !newNumber.isEmpty else { return }
+                                do {
+                                    try FirebaseService.shared.updateMeter(
+                                        oldMeterNumber: meter.meterNumber,
+                                        newName: newName,
+                                        newMeterNumber: newNumber
+                                    )
+                                    Haptics.shared.play(.success)
+                                    viewModel.activeSheet = nil
+                                } catch {
+                                    Haptics.shared.play(.error)
+                                }
+                            }
+                            .disabled(viewModel.editedName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || viewModel.editedNumber.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                        }
                     }
                 }
             }

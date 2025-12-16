@@ -4,6 +4,9 @@ import Charts
 struct ChartSection: View {
     let readings: [Reading]
     
+    @State private var currentX: Date? = nil
+    @State private var tooltip: (date: Date, text: String)? = nil
+    
     private var intervals: [ConsumptionAnalytics.IntervalConsumption] {
         let sorted = readings.sorted { $0.date < $1.date }
         guard sorted.count >= 2 else { return [] }
@@ -87,13 +90,16 @@ struct ChartSection: View {
                             .foregroundStyle(Color.red)
                             .lineStyle(StrokeStyle(lineWidth: 2))
                     }
+                    
+                    if let currentX {
+                        RuleMark(x: .value("Selected X", currentX))
+                            .lineStyle(StrokeStyle(lineWidth: 1, dash: [2]))
+                            .foregroundStyle(.red)
+                    }
                 }
                 .chartOverlay { proxy in
                     GeometryReader { geo in
-                        let points = stepPoints
-                        @State var currentX: Date? = nil
-                        @State var tooltip: (date: Date, text: String)? = nil
-
+                        
                         Rectangle().fill(.clear)
                             .contentShape(Rectangle())
                             .gesture(
@@ -101,21 +107,15 @@ struct ChartSection: View {
                                     .onChanged { value in
                                         let location = value.location
                                         if let xDate: Date = proxy.value(atX: location.x) {
-                                            // Find nearest step point by x distance
-                                            if let nearest = points.min(by: { abs($0.x.timeIntervalSince1970 - xDate.timeIntervalSince1970) < abs($1.x.timeIntervalSince1970 - xDate.timeIntervalSince1970) }) {
-                                                currentX = nearest.x
-                                                // Determine interval by matching start<=x<=end
-                                                if let interval = intervals.first(where: { nearest.x >= $0.startDate && nearest.x <= $0.endDate }) {
-                                                    let df = DateFormatter()
-                                                    df.dateStyle = .short
-                                                    df.timeStyle = .short
-                                                    let startText = df.string(from: interval.startDate)
-                                                    let endText = df.string(from: interval.endDate)
-                                                    let kwhh = String(format: "%.2f kWh/h", interval.kWhPerHour)
-                                                    tooltip = (date: nearest.x, text: "\(startText) → \(endText)\n\(kwhh)")
-                                                } else {
-                                                    tooltip = nil
-                                                }
+                                            // Snap to interval midpoint and show only average for the interval
+                                            if let interval = intervals.first(where: { xDate >= $0.startDate && xDate <= $0.endDate }) {
+                                                let midTime = interval.startDate.timeIntervalSince1970 + (interval.endDate.timeIntervalSince1970 - interval.startDate.timeIntervalSince1970)/2.0
+                                                let mid = Date(timeIntervalSince1970: midTime)
+                                                currentX = mid
+                                                let kwhPerDayInt = Int((interval.kWhPerHour * 24.0).rounded())
+                                                tooltip = (date: mid, text: "\(kwhPerDayInt) kWh")
+                                            } else {
+                                                tooltip = nil
                                             }
                                         }
                                     }
@@ -124,15 +124,22 @@ struct ChartSection: View {
                                         currentX = nil
                                     }
                             )
-                            .overlay(alignment: .topLeading) {
-                                if let tip = tooltip {
+                            .overlay {
+                                if let tip = tooltip, let xPos = proxy.position(forX: tip.date) {
                                     VStack(alignment: .leading, spacing: 4) {
-                                        Text(tip.text)
-                                            .font(.caption2)
-                                            .padding(6)
-                                            .background(RoundedRectangle(cornerRadius: 6).fill(.ultraThinMaterial))
+                                        ForEach(tip.text.components(separatedBy: "\n"), id: \.self) { line in
+                                            Text(line)
+                                                .font(.caption2)
+                                                .monospacedDigit()
+                                        }
                                     }
-                                    .padding(8)
+                                    .padding(6)
+                                    .background(RoundedRectangle(cornerRadius: 6).fill(.ultraThinMaterial))
+                                    .overlay(
+                                        RoundedRectangle(cornerRadius: 6)
+                                            .stroke(Color.white.opacity(0.2), lineWidth: 1)
+                                    )
+                                    .position(x: xPos + 8, y: 12) // near the top, slightly right of the red line
                                 }
                             }
                     }
