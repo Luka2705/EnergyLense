@@ -45,12 +45,22 @@ struct SeedReadingsHelper {
             }
 
             // 2) Prepare seed data
-            // Provided values:
-            // 21.12.24 8:24    33400,00 KWh
-            // 30.4.25 17:54    34482,00 KWh
-            // 24.6.25 9:30     34894,00 KWh
-            // 30.11.25 9:49    36080,00 KWh
-            // 16.12.25 9:24    36210,00 KWh
+            // 25.12.22 11:38    27324,00 KWh
+            // 21.1.23 14:20    27366,00 KWh
+            // 27.2.23 9:07    27560,00 KWh
+            // 1.5.23 12:46    28049,00 KWh
+            // 24.6.23 19:21    28742,00 KWh
+            // 26.6.23 7:27    28759,00 KWh
+            // 14.11.23 10:45    30101,00 KWh
+            // 15.1.24 14:39    30208,00 KWh
+            // 18.02.24 20:10    30340,00 KWh
+            // 9.6.24 13:20    31270,00 KWh
+            // 26.6.24 7:46    31445,00 KWh
+            // 21.12.24 8:24    32808,00 KWh
+            // 30.4.25 17:54    33755,00 KWh
+            // 24.6.25 9:30    34432,00 KWh
+            // 30.11.25 9:49    35842,00 KWh
+            // 16.12.25 9:24    35892,00 KWh
 
             let df = DateFormatter()
             df.locale = Locale(identifier: "de_DE")
@@ -59,11 +69,22 @@ struct SeedReadingsHelper {
 
             struct SeedItem { let dateString: String; let valueString: String }
             let seeds: [SeedItem] = [
-                .init(dateString: "21.12.24 8:24", valueString: "33400,00"),
-                .init(dateString: "30.4.25 17:54", valueString: "34482,00"),
-                .init(dateString: "24.6.25 9:30", valueString: "34894,00"),
-                .init(dateString: "30.11.25 9:49", valueString: "36080,00"),
-                .init(dateString: "16.12.25 9:24", valueString: "36210,00")
+                .init(dateString: "25.12.22 11:38", valueString: "27324,00"),
+                .init(dateString: "21.1.23 14:20", valueString: "27366,00"),
+                .init(dateString: "27.2.23 9:07", valueString: "27560,00"),
+                .init(dateString: "1.5.23 12:46", valueString: "28049,00"),
+                .init(dateString: "24.6.23 19:21", valueString: "28742,00"),
+                .init(dateString: "26.6.23 7:27", valueString: "28759,00"),
+                .init(dateString: "14.11.23 10:45", valueString: "30101,00"),
+                .init(dateString: "15.1.24 14:39", valueString: "30208,00"),
+                .init(dateString: "18.02.24 20:10", valueString: "30340,00"),
+                .init(dateString: "9.6.24 13:20", valueString: "31270,00"),
+                .init(dateString: "26.6.24 7:46", valueString: "31445,00"),
+                .init(dateString: "21.12.24 8:24", valueString: "32808,00"),
+                .init(dateString: "30.4.25 17:54", valueString: "33755,00"),
+                .init(dateString: "24.6.25 9:30", valueString: "34432,00"),
+                .init(dateString: "30.11.25 9:49", valueString: "35842,00"),
+                .init(dateString: "16.12.25 9:24", valueString: "35892,00")
             ]
 
             for seed in seeds {
@@ -127,3 +148,4 @@ struct SeedReadingsDebugView: View {
     SeedReadingsDebugView()
 }
 #endif
+

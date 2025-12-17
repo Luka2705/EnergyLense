@@ -11,11 +11,11 @@ struct StatsSection: View {
     }
     
     private var averageText: String {
-        StatsCalculator.calculateAverage(readings)
+        ConsumptionAnalytics.averageDailyConsumption(readings)
     }
     
     private var yearEndText: String {
-        StatsCalculator.calculateYearEndPrediction(readings)
+        ConsumptionAnalytics.projectedYearlyConsumptionFromAllData(readings)
     }
     
     var body: some View {

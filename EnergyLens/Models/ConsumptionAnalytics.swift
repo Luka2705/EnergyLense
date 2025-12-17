@@ -188,4 +188,46 @@ enum ConsumptionAnalytics {
 
         return total
     }
+
+    // MARK: - Legacy Stats (migrated from StatsCalculator)
+
+    /// Calculates average daily consumption in kWh/day
+    static func averageDailyConsumption(_ readings: [Reading]) -> String {
+        let sorted = readings.sorted { $0.date < $1.date }
+        guard sorted.count >= 2,
+              let first = sorted.first,
+              let last = sorted.last else { return "-" }
+
+        let days = last.date.timeIntervalSince(first.date) / 86400
+        if days <= 0 { return "-" }
+
+        let totalConsumption = last.value - first.value
+        let avgDaily = totalConsumption / days
+        return String(format: "%.1f", avgDaily)
+    }
+
+    /// Calculates predicted meter reading at year end
+    static func projectedYearlyConsumptionFromAllData(_ readings: [Reading]) -> String {
+        let sorted = readings.sorted { $0.date < $1.date }
+        guard sorted.count >= 2, let oldest = sorted.first, let youngest = sorted.last else { return "-" }
+
+        // Compute time delta in hours between oldest and youngest readings (robust against tiny negatives)
+        let epsilon: Double = 1e-6
+        let hoursDeltaRaw = youngest.date.timeIntervalSince(oldest.date) / 3600.0
+        let hoursDelta = max(0, hoursDeltaRaw)
+        guard hoursDelta > epsilon else { return "-" }
+
+        // Compute consumption delta in kWh between the two readings
+        let kWhDelta = youngest.value - oldest.value
+        guard kWhDelta >= 0 else { return "-" }
+
+        // Average consumption rate in kWh per hour
+        let kWhPerHour = kWhDelta / hoursDelta
+
+        // Use 8760 hours (non-leap year) for annual scaling
+        let annualHours: Double = 8760
+        let predictedAnnualConsumption = kWhPerHour * annualHours
+
+        return String(format: "%.0f", predictedAnnualConsumption)
+    }
 }
